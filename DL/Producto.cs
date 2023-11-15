@@ -14,4 +14,6 @@ public partial class Producto
     public int? IdCategoria { get; set; }
 
     public virtual Categoria? IdCategoriaNavigation { get; set; }
+
+    public string Categoria { get; set; } = null!;
 }

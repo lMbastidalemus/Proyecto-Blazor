@@ -1,0 +1,185 @@
+﻿@page "/form";
+@page "/form/{IdProducto:int}";
+
+@using ML;
+@inject HttpClient Http
+@inject NavigationManager navigation;
+
+
+
+<form class="form-control">
+    @*<DataAnnotationsValidator></DataAnnotationsValidator>*@
+    <div class="row">
+        <div class="col-md-3">
+            <label class="form-label">Nombre producto</label>
+            <input type="text" class="form-text" @bind="producto.Nombre"></input>
+            @*<ValidationMessage For="@(()=> producto.Nombre)"></ValidationMessage>*@
+        </div>
+
+         <div class="col-md-3">
+            <label class="form-label">Precio</label>
+            <input type="text" class="form-text" @bind="producto.Precio"></input>
+             @*<ValidationMessage For="@(()=> producto.Precio)"></ValidationMessage>*@
+        </div>
+
+         <div class="col-md-3">
+            <label class="form-label">Categoria</label>
+            <select class="form-select" @bind="producto.IdProducto">
+                <option value="0">--- Seleccionar ---</option>
+                @foreach (ML.Categorias categorias in producto.Categorias.Cats)
+                {
+                    <option value="@categorias.IdCategoria">@categorias.Categoria</option>
+                }
+            </select>
+        </div>
+    </div>
+    <button type="submit" class="btn btn-success" @onclick="@(() => FormP(producto))">Guardar</button>
+</form>
+
+
+
+
+@code {
+    [Parameter]
+    public int IdProducto { get; set; }
+
+    ML.Producto producto;
+
+    protected override void OnInitialized()
+    {
+
+        ML.Result result = BL.Categorias.GetAll();
+        producto = new Producto();
+        producto.Categorias = new Categorias();
+        producto.Categorias.Cats = result.Objects;
+        producto.Productoss = new List<object>();
+        if (IdProducto  != 0)
+        {
+            GetById(IdProducto);
+        }
+        else
+        {
+
+        }
+    }
+
+    public ML.Result GetById(int? IdProducto)
+    {
+
+        //Instancias
+        ML.Result result = BL.Categorias.GetAll();
+
+
+
+
+
+
+        //Para el update de precargar solo el formulario
+        if (IdProducto != null)
+        {
+            try
+            {
+
+                using (var client = new HttpClient())
+                {
+
+                    client.BaseAddress = new Uri("http://localhost:5283/api/productos/");
+                    var responseTask = client.GetAsync("GetById/" + IdProducto);
+                    responseTask.Wait();
+                    var resultAPI = responseTask.Result;
+
+                    if (resultAPI.IsSuccessStatusCode)
+                    {
+
+                        producto.Categorias.Cats = new List<object>();
+                        var readTask = resultAPI.Content.ReadAsAsync<ML.Result>();
+                        readTask.Wait();
+                        ML.Producto resultItemList = new ML.Producto();
+                        resultItemList = Newtonsoft.Json.JsonConvert.DeserializeObject<ML.Producto>(readTask.Result.Object.ToString());
+                        result.Object = resultItemList;
+
+                        producto = (ML.Producto)result.Object;
+                        result.Correct = true;
+
+                    }
+                    else
+                    {
+                        result.Correct = false;
+                        result.ErrorMessage = "No existen registros en la tabla Departamento";
+
+                    }
+
+                }
+
+            }
+            catch (Exception ex)
+            {
+                result.Correct = false;
+                result.ErrorMessage = ex.Message;
+
+            }
+
+
+        }
+
+        else
+        {
+            //Sino trae nada pues entonces solo se llenaran las listas y los demas campos estaran
+            //en blanco y esto es en cierta parte para que se muestre  form de agregar
+            producto.Categorias.Cats = result.Objects;
+
+
+        }
+        return result;
+    }
+    public static bool FormP(ML.Producto producto)
+    {
+        if(producto.IdProducto == 0)
+        {
+ 
+            using(var client = new HttpClient())
+            {
+                client.BaseAddress = new Uri("http://localhost:5283/api/productos/");
+                var task = client.PostAsJsonAsync<ML.Producto>("Add/", producto);
+                task.Wait();
+
+                var taskResult = task.Result;
+                if (taskResult.IsSuccessStatusCode)
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+        }
+        else
+        {
+             using(var client = new HttpClient())
+            {
+                client.BaseAddress = new Uri("http://localhost:5283/api/productos/");
+                var task = client.PutAsJsonAsync<ML.Producto>("Update/" , producto);
+                task.Wait();
+
+                var taskResult = task.Result;
+                if (taskResult.IsSuccessStatusCode)
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+        }
+    }
+
+    
+  
+
+
+
+
+
+}

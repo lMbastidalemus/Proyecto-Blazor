@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace SL.Controllers
 {
-    [Route("api/")]
+    [Route("api/productos")]
     [ApiController]
     public class ProductosController : ControllerBase
     {
@@ -54,7 +54,7 @@ namespace SL.Controllers
         }
 
         [Route("Delete/{IdProducto}")]
-        [HttpPost]
+        [HttpDelete]
         public IActionResult Delete(int IdProducto)
         {
             ML.Result result = BL.Producto.Delete(IdProducto);

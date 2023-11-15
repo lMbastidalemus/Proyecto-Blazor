@@ -1,0 +1,104 @@
+﻿@page "/Productos";
+@using ML;
+@inject HttpClient Http
+
+<h3 class="text-center">Productos</h3>
+
+<a class="btn btn-success" href="form">Nuevo producto</a>
+
+    <div class="table-responsive">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Editar</th>
+                <th>Nombre del producto</th>
+                <th>Precio</th>
+                <th>Categoria</th>
+                <th>Eliminar</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (ML.Producto  producto in GetAll())
+            {
+                <tr>
+                    <td>
+                        <a class="btn btn-warning" href="form/@producto.IdProducto">Editar</a>
+                    </td>
+                    <td>@producto.Nombre</td>
+                    <td>@producto.Precio</td>
+                    <td>@producto.Categorias.Categoria</td>
+                    <td>
+                        <button type="button" class="btn btn-danger btn-sm ms-2" @onclick = "@(() => Delete(producto.IdProducto))">Eliminar</button>
+                      
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    
+</div>
+
+
+
+@code {
+  
+    public static List<object> GetAll()
+    {
+        Producto producto = new Producto();
+        ML.Result result = new Result();
+        ML.Result resultCat = BL.Categorias.GetAll();
+        producto.Categorias = new Categorias();
+        using (var cliente = new HttpClient())
+        {
+            producto.Productoss = new List<object>();
+            producto.Categorias.Cats = resultCat.Objects;
+            producto.Productoss = new List<object>();
+            cliente.BaseAddress = new Uri("http://localhost:5283/api/productos/");
+            var task = cliente.GetAsync("GetAll");
+            task.Wait();
+
+            var resultTask = task.Result;
+            if (resultTask.IsSuccessStatusCode)
+            {
+                var readTask = resultTask.Content.ReadAsAsync<ML.Result>();
+                readTask.Wait();
+                foreach (var resultItem in readTask.Result.Objects)
+                {
+                    ML.Producto resultItemList = Newtonsoft.Json.JsonConvert.DeserializeObject<ML.Producto>(resultItem.ToString());
+                    producto.Productoss.Add(resultItemList);
+                }
+
+            }
+
+
+            return producto.Productoss;
+        }
+    }
+
+    public static  bool Delete(int IdProducto)
+    {
+        using(var client = new HttpClient())
+        {
+            client.BaseAddress = new Uri("http://localhost:5283/api/productos/");
+            var task =client.DeleteAsync("Delete/" + IdProducto);
+            task.Wait();
+
+            var taskResult = task.Result;
+            if (taskResult.IsSuccessStatusCode)
+            {
+                return true;
+
+            }
+            else
+            {
+                return false;
+            }
+
+
+        }
+    }
+
+ 
+
+
+}
