@@ -7,6 +7,7 @@
 
 
 
+@if(producto.IdProducto == 0){
 <form class="form-control">
     @*<DataAnnotationsValidator></DataAnnotationsValidator>*@
     <div class="row">
@@ -16,15 +17,16 @@
             @*<ValidationMessage For="@(()=> producto.Nombre)"></ValidationMessage>*@
         </div>
 
-         <div class="col-md-3">
+        <div class="col-md-3">
             <label class="form-label">Precio</label>
             <input type="text" class="form-text" @bind="producto.Precio"></input>
-             @*<ValidationMessage For="@(()=> producto.Precio)"></ValidationMessage>*@
+            @*<ValidationMessage For="@(()=> producto.Precio)"></ValidationMessage>*@
         </div>
 
-         <div class="col-md-3">
+
+        <div class="col-md-3">
             <label class="form-label">Categoria</label>
-            <select class="form-select" @bind="producto.IdProducto">
+            <select class="form-select" @bind="producto.Categorias.IdCategoria">
                 <option value="0">--- Seleccionar ---</option>
                 @foreach (ML.Categorias categorias in producto.Categorias.Cats)
                 {
@@ -32,9 +34,41 @@
                 }
             </select>
         </div>
+
+
     </div>
-    <button type="submit" class="btn btn-success" @onclick="@(() => FormP(producto))">Guardar</button>
+    <button type="submit" class="btn btn-success">Guardar</button>
 </form>
+}else{
+<form class="form-control">
+    @*<DataAnnotationsValidator></DataAnnotationsValidator>*@
+    <div class="row">
+        <div class="col-md-3">
+            <label class="form-label">Nombre producto</label>
+            <input type="text" class="form-text" @bind="producto.Nombre"></input>
+            @*<ValidationMessage For="@(()=> producto.Nombre)"></ValidationMessage>*@
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label">Precio</label>
+            <input type="text" class="form-text" @bind="producto.Precio"></input>
+            @*<ValidationMessage For="@(()=> producto.Precio)"></ValidationMessage>*@
+        </div>
+
+
+
+        <div class="col-md-3">
+            <label class="form-label">Categoria</label>
+            <select class="form-select" @bind="producto.Categorias.IdCategoria">
+                <option value="@producto.Categorias.IdCategoria">@producto.Categorias.Categoria</option>
+            </select>
+        </div>
+
+
+    </div>
+    <button type="submit" class="btn btn-success">Guardar</button>
+</form>
+}
 
 
 
@@ -53,13 +87,17 @@
         producto.Categorias = new Categorias();
         producto.Categorias.Cats = result.Objects;
         producto.Productoss = new List<object>();
-        if (IdProducto  != 0)
+        if (IdProducto != 0)
         {
+            producto.Categorias = new Categorias();
+
             GetById(IdProducto);
+
         }
         else
         {
-
+            
+            FormP();
         }
     }
 
@@ -68,10 +106,6 @@
 
         //Instancias
         ML.Result result = BL.Categorias.GetAll();
-
-
-
-
 
 
         //Para el update de precargar solo el formulario
@@ -91,7 +125,7 @@
                     if (resultAPI.IsSuccessStatusCode)
                     {
 
-                        producto.Categorias.Cats = new List<object>();
+                        producto.Categorias.Cats = result.Objects;
                         var readTask = resultAPI.Content.ReadAsAsync<ML.Result>();
                         readTask.Wait();
                         ML.Producto resultItemList = new ML.Producto();
@@ -132,51 +166,53 @@
         }
         return result;
     }
-    public static bool FormP(ML.Producto producto)
+    public bool FormP()
     {
-        if(producto.IdProducto == 0)
+        ML.Result result = new Result();
+        if (producto.IdProducto == 0)
         {
- 
-            using(var client = new HttpClient())
+
+            using (var client = new HttpClient())
             {
                 client.BaseAddress = new Uri("http://localhost:5283/api/productos/");
-                var task = client.PostAsJsonAsync<ML.Producto>("Add/", producto);
+                var task = client.PostAsJsonAsync<Producto>("Add/", producto);
                 task.Wait();
 
                 var taskResult = task.Result;
                 if (taskResult.IsSuccessStatusCode)
                 {
-                    return true;
+                    return  true;
                 }
                 else
                 {
-                    return false;
+                    return  false;
                 }
             }
         }
         else
         {
-             using(var client = new HttpClient())
+            using (var client = new HttpClient())
             {
                 client.BaseAddress = new Uri("http://localhost:5283/api/productos/");
-                var task = client.PutAsJsonAsync<ML.Producto>("Update/" , producto);
+                var task = client.PutAsJsonAsync<ML.Producto>("Update/", producto);
                 task.Wait();
 
                 var taskResult = task.Result;
                 if (taskResult.IsSuccessStatusCode)
                 {
-                    return true;
+                    return  true;
                 }
                 else
                 {
-                    return false;
+                    return  false;
                 }
             }
         }
+       
     }
 
-    
-  
+
+
 
 
 
