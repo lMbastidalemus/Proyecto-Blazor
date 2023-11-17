@@ -6,8 +6,7 @@
 @inject NavigationManager navigation;
 
 
-
-@if(producto.IdProducto == 0){
+@if(producto.IdProducto == null){
 <form class="form-control">
     @*<DataAnnotationsValidator></DataAnnotationsValidator>*@
     <div class="row">
@@ -66,7 +65,7 @@
 
 
     </div>
-    <button type="submit" class="btn btn-success">Guardar</button>
+    <button type="submit" class="btn btn-success" @onclick="@(()=> FormP())">Guardar</button>
 </form>
 }
 
@@ -75,30 +74,31 @@
 
 @code {
     [Parameter]
-    public int IdProducto { get; set; }
+    public int? IdProducto { get; set; }
 
-    ML.Producto producto;
+    ML.Producto producto = new ML.Producto();
 
     protected override void OnInitialized()
     {
 
         ML.Result result = BL.Categorias.GetAll();
-        producto = new Producto();
+        //producto = new Producto();
         producto.Categorias = new Categorias();
         producto.Categorias.Cats = result.Objects;
         producto.Productoss = new List<object>();
-        if (IdProducto != 0)
+        if (IdProducto > 0)
         {
             producto.Categorias = new Categorias();
 
             GetById(IdProducto);
 
+
         }
         else
         {
-            
             FormP();
         }
+
     }
 
     public ML.Result GetById(int? IdProducto)
@@ -168,7 +168,6 @@
     }
     public bool FormP()
     {
-        ML.Result result = new Result();
         if (producto.IdProducto == 0)
         {
 
@@ -182,6 +181,7 @@
                 if (taskResult.IsSuccessStatusCode)
                 {
                     return  true;
+                  
                 }
                 else
                 {
@@ -193,8 +193,9 @@
         {
             using (var client = new HttpClient())
             {
+                producto.IdProducto = null;
                 client.BaseAddress = new Uri("http://localhost:5283/api/productos/");
-                var task = client.PutAsJsonAsync<ML.Producto>("Update/", producto);
+                var task = client.PutAsJsonAsync($"Update/{IdProducto}" , producto);
                 task.Wait();
 
                 var taskResult = task.Result;

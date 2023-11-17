@@ -10,6 +10,6 @@ namespace ML
     {
         public int IdCategoria { get; set; }
         public string Categoria { get; set; }
-        public List<object> Cats { get; set; }
+        public List<object>? Cats { get; set; }
     }
 }
